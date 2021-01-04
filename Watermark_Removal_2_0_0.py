@@ -107,9 +107,6 @@ x_test_noisy = image_batch_x_test + noise_factor * tf.random.normal(shape=image_
 x_train_noisy = tf.clip_by_value(x_train_noisy, clip_value_min=0., clip_value_max=1.)
 x_test_noisy = tf.clip_by_value(x_test_noisy, clip_value_min=0., clip_value_max=1.)
 
-#TODO: Dont forget to normalize.
-# normalization_layer = tf.keras.layers.experimental.preprocessing.Rescaling(1./255)
-
 scale_factor = 1
 class Denoise(Model):
   def __init__(self):

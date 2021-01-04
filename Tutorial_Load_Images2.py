@@ -20,7 +20,6 @@ data_dir = pathlib.Path(data_dir)
 image_count = len(list(data_dir.glob('*/*.jpg')))
 # print(image_count)
 
-
 batch_size = 32
 img_height = 180
 img_width = 180
