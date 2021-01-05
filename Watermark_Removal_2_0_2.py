@@ -57,7 +57,7 @@ def apply_watermark(x_data):
       for idx_pic in range(x_data.shape[0]):
          x_shift = np.random.randint(-20,20)
          y_shift = np.random.randint(-20,20)
-         alpha = np.random.uniform(0.3,0.7)
+         alpha = np.random.uniform(0.2,0.8)
          current_mask = rotate(general_mask,x_shift,y_shift)
          x_data_single_pic = x_data[idx_pic,:,:,:]
          x_data_single_pic = \
@@ -80,7 +80,7 @@ def apply_noise(x_data):
 def apply_compression(x_data):
    x_data = x_data.numpy()
    for idx_pic in range(x_data.shape[0]):
-      compression_level = np.random.randint(4,15)
+      compression_level = np.random.randint(7,17)
       output = io.BytesIO()
       x_data_single_pic = x_data[idx_pic,:,:,:]
       x_data_single_pic = (x_data_single_pic*255).astype(np.uint8)
