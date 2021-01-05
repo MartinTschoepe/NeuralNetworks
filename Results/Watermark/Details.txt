@@ -1,0 +1,5 @@
+Figure1:
+10Epochs | 20% vongoogledataset |train_loss: 0.0067 | val_loss: 0.0067 | JPEG-Qauli: 4-15 | Watermark alpha 0.3-0.7
+
+Figure2:
+10Epochs | 20% vongoogledataset |train_loss: 0.0067 | val_loss: 0.0067 | JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8
