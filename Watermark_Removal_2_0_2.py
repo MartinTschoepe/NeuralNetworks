@@ -13,6 +13,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+
 def load_pics_from_folder(directory,num_lines,num_columns):
    print('Loading from folder')
    num_pic = 0
@@ -31,9 +32,11 @@ def load_pics_from_folder(directory,num_lines,num_columns):
    full_data_set = np.vstack(pic_list)
    return num_pic,full_data_set
 
+
 def rotate(array_in,x_shift,y_shift):
    array_out = np.concatenate((array_in[x_shift:,:,:],array_in[:x_shift,:,:]),axis=0)
    return np.concatenate((array_out[:,x_shift:,:],array_out[:,:x_shift,:]),axis=1)
+
 
 def apply_perturbation(y_data):
    x_data = apply_watermark(y_data)
@@ -41,6 +44,7 @@ def apply_perturbation(y_data):
    x_data = apply_compression(x_data)
 
    return x_data
+
 
 def apply_watermark(x_data):
    mask_path = "C:/Coding/Watermark-2.0/Watermark_data/orig_mask.png"
@@ -71,11 +75,13 @@ def apply_watermark(x_data):
 
    return x_data
 
+
 def apply_noise(x_data):
    noise_factor = np.random.uniform(0.05,0.2)
    x_data = x_data + noise_factor * tf.random.normal(shape=x_data.shape) 
    x_data = tf.clip_by_value(x_data, clip_value_min=0., clip_value_max=1.)
    return x_data
+
 
 def apply_compression(x_data):
    x_data = x_data.numpy()
@@ -91,6 +97,7 @@ def apply_compression(x_data):
       x_data[idx_pic,:,:,:] = x_data_single_pic
    x_data = tf.convert_to_tensor(x_data, dtype=tf.float32)
    return x_data
+
 
 def load_files(path_to_pickle,path,num_lines,num_columns):
    pickle_exists = os.path.isfile(path_to_pickle)
@@ -109,6 +116,44 @@ def load_files(path_to_pickle,path,num_lines,num_columns):
       np.save(path_to_pickle,dataset)
 
    return num_pic,dataset
+
+
+def show_examples(y_test_data,x_test_data,decoded_imgs):
+   n = 6
+   plt.figure(figsize=(20, 9))
+   gs1 = gridspec.GridSpec(3,n)
+   gs1.update(wspace=0.0,hspace=0.0)
+   for i in range(n):
+      # display original
+      ax = plt.subplot(gs1[i])
+      # ax = plt.subplot(3, n, i + 1)
+      plt.title("original")
+      plt.imshow(tf.squeeze(y_test_data[i]))
+      plt.gray()
+      ax.get_xaxis().set_visible(False)
+      ax.get_yaxis().set_visible(False)
+
+      # display original + noise
+      bx = plt.subplot(gs1[i+n])
+      # bx = plt.subplot(3, n, i + n + 1)
+      plt.title("pertubed")
+      plt.imshow(tf.squeeze(x_test_data[i]))
+      plt.gray()
+      bx.get_xaxis().set_visible(False)
+      bx.get_yaxis().set_visible(False)
+
+      # display reconstruction
+      cx = plt.subplot(gs1[i+2*n])
+      # cx = plt.subplot(3, n, i + 2*n + 1)
+      plt.title("reconstructed")
+      plt.imshow(tf.squeeze(decoded_imgs[i]))
+      plt.gray()
+      cx.get_xaxis().set_visible(False)
+      cx.get_yaxis().set_visible(False)
+   plt.autoscale(tight=True)
+   plt.show()
+   print('figure showen')
+
 
 def main():
    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
@@ -163,14 +208,38 @@ def main():
    x_test_data = apply_perturbation(y_test_data)
 
    batch_size = 1
-   num_epochs = 10
-   for epoch in range(num_epochs): 
+   epochs = 5
+   sub_epochs = 5
+   loss = np.zeros((0))
+   val_loss = np.zeros((0))
+   for epoch in range(epochs): 
       x_train_data = apply_perturbation(y_train_data)
-      autoencoder.fit(x_train_data, y_train_data,
-                      epochs=1,
+      history = autoencoder.fit(x_train_data, y_train_data,
+                      epochs=sub_epochs,
                       shuffle=True,
                       batch_size=batch_size,
                       validation_data=(x_test_data, y_test_data))
+      loss = np.concatenate((loss,np.asarray(history.history['loss'])),axis=0)
+      val_loss = np.concatenate((val_loss,np.asarray(history.history['val_loss'])),axis=0) 
+
+   print(loss)
+   print(val_loss)
+
+   epochs_array = range(epochs*sub_epochs)
+
+   plt.figure()
+   plt.plot(epochs_array, loss, 'r', label='Final training loss: ' \
+            + str("{:.2e}".format(loss[-1]) ))
+   plt.plot(epochs_array, val_loss, 'bo', label='Final validation loss: ' \
+            + str("{:.2e}".format(val_loss[-1])  ))
+   plt.title('Training and Validation Loss')
+   plt.xlabel('Epoch')
+   plt.ylabel('Loss Value')
+   plt.xscale('log')
+   plt.yscale('log')
+   plt.ylim([0.001, 1])
+   plt.legend()
+   plt.show()
 
    autoencoder.encoder.summary()
    autoencoder.decoder.summary()
@@ -179,41 +248,7 @@ def main():
    encoded_imgs = autoencoder.encoder(x_test_data).numpy()
    decoded_imgs = autoencoder.decoder(encoded_imgs).numpy()
 
-   print('after applaying encoder')
-   n = 6
-   plt.figure(figsize=(20, 9))
-   gs1 = gridspec.GridSpec(3,n)
-   gs1.update(wspace=0.0,hspace=0.0)
-   for i in range(n):
-      # display original
-      ax = plt.subplot(gs1[i])
-      # ax = plt.subplot(3, n, i + 1)
-      plt.title("original")
-      plt.imshow(tf.squeeze(y_test_data[i]))
-      plt.gray()
-      ax.get_xaxis().set_visible(False)
-      ax.get_yaxis().set_visible(False)
-
-      # display original + noise
-      bx = plt.subplot(gs1[i+n])
-      # bx = plt.subplot(3, n, i + n + 1)
-      plt.title("pertubed")
-      plt.imshow(tf.squeeze(x_test_data[i]))
-      plt.gray()
-      bx.get_xaxis().set_visible(False)
-      bx.get_yaxis().set_visible(False)
-
-      # display reconstruction
-      cx = plt.subplot(gs1[i+2*n])
-      # cx = plt.subplot(3, n, i + 2*n + 1)
-      plt.title("reconstructed")
-      plt.imshow(tf.squeeze(decoded_imgs[i]))
-      plt.gray()
-      cx.get_xaxis().set_visible(False)
-      cx.get_yaxis().set_visible(False)
-   plt.autoscale(tight=True)
-   plt.show()
-   print('figure showen')
+   show_examples(y_test_data,x_test_data,decoded_imgs)
 
 if __name__ == '__main__':
     main()
