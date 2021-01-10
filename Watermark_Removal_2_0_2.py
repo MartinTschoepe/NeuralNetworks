@@ -59,9 +59,9 @@ def apply_watermark(x_data):
 
       x_data = x_data.numpy()
       for idx_pic in range(x_data.shape[0]):
-         x_shift = np.random.randint(-20,20)
-         y_shift = np.random.randint(-20,20)
-         alpha = np.random.uniform(0.2,0.8)
+         x_shift = np.random.randint(-25,25)
+         y_shift = np.random.randint(-25,25)
+         alpha = np.random.uniform(0.3,0.7)
          current_mask = rotate(general_mask,x_shift,y_shift)
          x_data_single_pic = x_data[idx_pic,:,:,:]
          x_data_single_pic = \
@@ -77,7 +77,7 @@ def apply_watermark(x_data):
 
 
 def apply_noise(x_data):
-   noise_factor = np.random.uniform(0.05,0.2)
+   noise_factor = np.random.uniform(0.02,0.1)
    x_data = x_data + noise_factor * tf.random.normal(shape=x_data.shape) 
    x_data = tf.clip_by_value(x_data, clip_value_min=0., clip_value_max=1.)
    return x_data
@@ -86,7 +86,7 @@ def apply_noise(x_data):
 def apply_compression(x_data):
    x_data = x_data.numpy()
    for idx_pic in range(x_data.shape[0]):
-      compression_level = np.random.randint(7,17)
+      compression_level = np.random.randint(10,20)
       output = io.BytesIO()
       x_data_single_pic = x_data[idx_pic,:,:,:]
       x_data_single_pic = (x_data_single_pic*255).astype(np.uint8)
@@ -118,7 +118,10 @@ def load_files(path_to_pickle,path,num_lines,num_columns):
    return num_pic,dataset
 
 
-def show_examples(y_test_data,x_test_data,decoded_imgs):
+def show_examples(y_test_data,x_test_data,autoencoder):
+   encoded_imgs = autoencoder.encoder(x_test_data).numpy()
+   decoded_imgs = autoencoder.decoder(encoded_imgs).numpy()
+
    n = 6
    plt.figure(figsize=(20, 9))
    gs1 = gridspec.GridSpec(3,n)
@@ -155,78 +158,33 @@ def show_examples(y_test_data,x_test_data,decoded_imgs):
    print('figure showen')
 
 
-def main():
-   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
-   # directory1 = "C:/Coding/Watermark-2.0/datasets/PIRM_Self-Val_set/LR"
-   # directory2 = "C:/Coding/Watermark-2.0/datasets/PIRM_Self-Val_set/MR"
-   directory3 = "C:/Coding/Watermark-2.0/datasets/google"
-   num_lines_orig = 512
-   num_columns_orig = 768
-   # path_to_pickle = 'datasets/PIRM_dataset.npy'
-   path_to_pickle = 'datasets/google_512_768.npy'
+class Denoise(Model):
+   def __init__(self,input_shape,filter_size):
+      super(Denoise, self).__init__()
+      self.encoder = tf.keras.Sequential([
+         layers.Input(shape=input_shape), 
+         layers.Conv2D(filter_size[0], (3,3), activation='relu', padding='same', strides=2),
+         layers.Conv2D(filter_size[1], (3,3), activation='relu', padding='same', strides=2),
+         layers.Conv2D(filter_size[2], (3,3), activation='relu', padding='same', strides=2),
+         layers.Conv2D(filter_size[3], (3,3), activation='relu', padding='same', strides=2)
+         # layers.Conv2D(filter_size[4], (3,3), activation='relu', padding='same', strides=2)
+         ])
 
-   num_pic,full_data_set = load_files(path_to_pickle,directory3,num_lines_orig,num_columns_orig)
-   input_shape = (num_lines_orig,num_columns_orig,3)
+      self.decoder = tf.keras.Sequential([
+         # layers.Conv2DTranspose(filter_size[4], kernel_size=3, strides=2, activation='relu', padding='same'),
+         layers.Conv2DTranspose(filter_size[3], kernel_size=3, strides=2, activation='relu', padding='same'),
+         layers.Conv2DTranspose(filter_size[2], kernel_size=3, strides=2, activation='relu', padding='same'),
+         layers.Conv2DTranspose(filter_size[1], kernel_size=3, strides=2, activation='relu', padding='same'),
+         layers.Conv2DTranspose(filter_size[0], kernel_size=3, strides=2, activation='relu', padding='same'),
+         layers.Conv2D(3, kernel_size=(3,3), activation='sigmoid', padding='same')])
 
-   print(num_pic)
-   full_data_set = full_data_set/255
-   y_train_data, y_test_data = np.split(full_data_set,[int(0.8*num_pic)],0)
-   y_train_data = tf.convert_to_tensor(y_train_data, dtype=tf.float32)
-   y_test_data = tf.convert_to_tensor(y_test_data, dtype=tf.float32)
+   def call(self, x):
+      encoded = self.encoder(x)
+      decoded = self.decoder(encoded)
+      return decoded
 
-   # Parameter for testing
-   num_filter1 = 8
-   num_filter2 = 16
-   num_filter3 = 32
-   # Parameter for final training. More research needed. Try dashboard!
-   # num_filter1 = 64
-   # num_filter2 = 128
-   # num_filter3 = 256
-   class Denoise(Model):
-      def __init__(self):
-         super(Denoise, self).__init__()
-         self.encoder = tf.keras.Sequential([
-            layers.Input(shape=input_shape), 
-            layers.Conv2D(num_filter1, (3,3), activation='relu', padding='same', strides=2),
-            layers.Conv2D(num_filter2, (3,3), activation='relu', padding='same', strides=2),
-            layers.Conv2D(num_filter3, (3,3), activation='relu', padding='same', strides=2)])
-
-         self.decoder = tf.keras.Sequential([
-            layers.Conv2DTranspose(num_filter3, kernel_size=3, strides=2, activation='relu', padding='same'),
-            layers.Conv2DTranspose(num_filter2, kernel_size=3, strides=2, activation='relu', padding='same'),
-            layers.Conv2DTranspose(num_filter1, kernel_size=3, strides=2, activation='relu', padding='same'),
-            layers.Conv2D(3, kernel_size=(3,3), activation='sigmoid', padding='same')])
-
-      def call(self, x):
-         encoded = self.encoder(x)
-         decoded = self.decoder(encoded)
-         return decoded
-
-   autoencoder = Denoise()
-
-   autoencoder.compile(optimizer='adam', loss=losses.MeanSquaredError())
-   x_test_data = apply_perturbation(y_test_data)
-
-   batch_size = 1
-   epochs = 5
-   sub_epochs = 5
-   loss = np.zeros((0))
-   val_loss = np.zeros((0))
-   for epoch in range(epochs): 
-      x_train_data = apply_perturbation(y_train_data)
-      history = autoencoder.fit(x_train_data, y_train_data,
-                      epochs=sub_epochs,
-                      shuffle=True,
-                      batch_size=batch_size,
-                      validation_data=(x_test_data, y_test_data))
-      loss = np.concatenate((loss,np.asarray(history.history['loss'])),axis=0)
-      val_loss = np.concatenate((val_loss,np.asarray(history.history['val_loss'])),axis=0) 
-
-   print(loss)
-   print(val_loss)
-
+def plot_training_progress(epochs,sub_epochs,loss,val_loss):
    epochs_array = range(epochs*sub_epochs)
-
    plt.figure()
    plt.plot(epochs_array, loss, 'r', label='Final training loss: ' \
             + str("{:.2e}".format(loss[-1]) ))
@@ -241,14 +199,70 @@ def main():
    plt.legend()
    plt.show()
 
+def post_processing(loss,val_loss,y_test_data,x_test_data,epochs,sub_epochs,autoencoder):
+   plot_training_progress(epochs,sub_epochs,loss,val_loss)
    autoencoder.encoder.summary()
    autoencoder.decoder.summary()
+   show_examples(y_test_data,x_test_data,autoencoder)
 
-   print('before applaying encoder')
-   encoded_imgs = autoencoder.encoder(x_test_data).numpy()
-   decoded_imgs = autoencoder.decoder(encoded_imgs).numpy()
+def pre_processing():
+   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+   directory1 = "C:/Coding/Watermark-2.0/datasets/PIRM_Self-Val_set/LR"
+   directory2 = "C:/Coding/Watermark-2.0/datasets/PIRM_Self-Val_set/MR"
+   directory3 = "C:/Coding/Watermark-2.0/datasets/google"
+   num_lines_orig = 512
+   num_columns_orig = 768
+   path_to_pickle = 'datasets/google_512_768.npy'
 
-   show_examples(y_test_data,x_test_data,decoded_imgs)
+   num_pic,full_data_set = load_files(path_to_pickle,directory3,num_lines_orig,num_columns_orig)
+   input_shape = (num_lines_orig,num_columns_orig,3)
+
+   full_data_set = full_data_set/255
+   y_train_data, y_test_data = np.split(full_data_set,[int(0.8*num_pic)],0)
+   y_train_data = tf.convert_to_tensor(y_train_data, dtype=tf.float32)
+   y_test_data = tf.convert_to_tensor(y_test_data, dtype=tf.float32)
+
+   return y_train_data,y_test_data,input_shape
+
+def training(y_train_data,y_test_data,input_shape,filter_size):
+   autoencoder = Denoise(input_shape,filter_size)
+   autoencoder.compile(optimizer='adam', loss=losses.MeanSquaredError())
+
+   batch_size = 1
+   epochs = 100
+   denoise_epochs = 1
+   loss = np.zeros((0))
+   val_loss = np.zeros((0))
+   x_test_data = apply_perturbation(y_test_data)
+   for epoch in range(epochs): 
+      print('Epoche: ' + str(epoch))
+      x_train_data = apply_perturbation(y_train_data)
+      history = autoencoder.fit(x_train_data, y_train_data,
+                      epochs=denoise_epochs,
+                      shuffle=True,
+                      batch_size=batch_size,
+                      validation_data=(x_test_data, y_test_data))
+      loss = np.concatenate((loss,np.asarray(history.history['loss'])),axis=0)
+      val_loss = np.concatenate((val_loss,np.asarray(history.history['val_loss'])),axis=0)
+      if (epoch*denoise_epochs >= 10):
+         batch_size = 4
+
+   return loss,val_loss,y_test_data,x_test_data,epochs,denoise_epochs,autoencoder
+
+def main():
+
+   y_train_data,y_test_data,input_shape = pre_processing()
+
+   n_filter= np.zeros((6))
+   n_filter[0] = 32
+   n_filter[1] = 64
+   n_filter[2] =128
+   n_filter[3] =256
+   n_filter[4] =  8
+   n_filter[5] =  8
+   loss,val_loss,y_test_data,x_test_data,epochs,sub_epochs,autoencoder = \
+                     training(y_train_data,y_test_data,input_shape,n_filter)
+   post_processing(loss,val_loss,y_test_data,x_test_data,epochs,sub_epochs,autoencoder)
 
 if __name__ == '__main__':
     main()

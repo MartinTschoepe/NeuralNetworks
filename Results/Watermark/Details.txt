@@ -1,5 +1,56 @@
 Figure1:
-10Epochs | 20% vongoogledataset |train_loss: 0.0067 | val_loss: 0.0067 | JPEG-Qauli: 4-15 | Watermark alpha 0.3-0.7
+1*10 Epochen | 20% vongoogledataset |train_loss: 0.0067 | val_loss: 0.0067 | Noise:0.05-0.20 |JPEG-Qauli: 4-15 | Watermark alpha 0.3-0.7 | Batch_size = 1
 
 Figure2:
-10Epochs | 20% vongoogledataset |train_loss: 0.0067 | val_loss: 0.0067 | JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8
+1*10 Epochen | 20% vongoogledataset |train_loss: 0.0067 | val_loss: 0.0067 | Noise:0.05-0.20 |JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8 | Batch_size = 1
+
+Figure3:
+Netz: Vier layer, je 16 Filter
+1*5 Epochen | 20% vongoogledataset |train_loss: 0.0113 | val_loss: 0.0115 | Noise:0.05-0.20 |JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8 | Batch_size = 1
+
+Figure4:
+Netz: Vier layer, je 8,16,32,32 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.0027 | val_loss: 0.0034 | Noise:0.05-0.20 |JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8 | Batch_size = 1
+
+Figure5:
+Netz: Vier layer, je 8,16,32,32 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.0028 | val_loss: 0.0037 | Noise:0.05-0.20 |JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8 | Additationally every 10th Epoch was learned on auto-encoding | Batch_size = 1
+
+Figure6:
+Netz: Vier layer, je 8,16,32,32 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.0027 | val_loss: 0.0036 | Noise:0.05-0.20 |JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8  | Every 10th Epoch Iterative-Training: Output was used es new input. | Batch_size = 1
+
+Figure7 (bisher bestes Ergebniss):
+Netz: Vier layer, je 8,16,32,64 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.00244 | val_loss: 0.00333 | Noise:0.05-0.20 | JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8 | Batch_size = 1
+
+Figure8:
+Netz: Vier layer, je 8,16,32,32 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.00306 | val_loss: 0.00439 | Noise:0.05-0.20 | JPEG-Qauli: 7-17 | Watermark alpha 0.2-0.8 | Batch_size = 4
+
+
+Figure9 (neuer Default, weil manipulierte Bilder schlimmer als die Spartanrace-Bilder):
+Netz: Vier layer, je 8,16,32,64 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.00263 | val_loss: 0.00345 | Noise:0.02-0.10 | JPEG-Qauli: 9-17 | Watermark alpha 0.2-0.8 | Batch_size = 4
+
+Figure10:
+Netz: Vier layer, je 8,16,32,64 Filter
+100*1 Epochen | 20% vongoogledataset |train_loss: 0.00250 | val_loss: 0.00327 | Noise:0.02-0.10 | JPEG-Qauli: 9-17 | Watermark alpha 0.2-0.8 |
+Batch_size (variabel) = 1 (10 Epochen), 4 (rest) | (keine gestörten Bilder doppelt verwenden) 
+
+Figure11:
+Netz: Fünf layer, 8,16,32,64,128 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.00 | val_loss: 0.00 | Noise:0.02-0.10 | JPEG-Qauli: 10-20 | Watermark alpha 0.3-0.7 |
+Batch_size (variabel) = 1 (10 Epochen), 4 (rest) | (keine gestörten Bilder doppelt verwenden) 
+
+Figure12:
+Netz: Vier layer, 16,32,64,128 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.00 | val_loss: 0.00 | Noise:0.02-0.10 | JPEG-Qauli: 10-20 | Watermark alpha 0.3-0.7 |
+Batch_size (variabel) = 1 (10 Epochen), 4 (rest) | (keine gestörten Bilder doppelt verwenden) 
+
+Figure13:
+Netz: Sechs layer, je 8,16,32,64,128,256 Filter
+10*10 Epochen | 20% vongoogledataset |train_loss: 0.00 | val_loss: 0.00 | Noise:0.02-0.10 | JPEG-Qauli: 9-17 | Watermark alpha 0.2-0.8 | Batch_size = 4
+
+Notizen: 
+1.
